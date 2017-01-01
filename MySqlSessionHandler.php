@@ -44,7 +44,7 @@ class MySqlSessionHandler{
         $this->dbHost=$dbHost;
         $this->dbUser=$dbUser;
         $this->dbPassword=$dbPassword;
-        $this->dbDatabase=$dbDatabase
+        $this->dbDatabase=$dbDatabase;
         
     }
 
