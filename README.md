@@ -1,6 +1,6 @@
 # PHP MySQL Session Handler
 
-A SessionHandler to save session data into a mysql database with locking.
+A SessionHandler to save session data into a mysql database with locking, compressing big sessions and archinvig stale sessions.
 
 ## Usage
 Create a table in your database:
