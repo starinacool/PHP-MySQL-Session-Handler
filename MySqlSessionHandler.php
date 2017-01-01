@@ -122,6 +122,7 @@ class MySqlSessionHandler{
     public function write($id, $data)
     {
 
+	$updt=array();
         $this->hits++;
         if ( strlen($data) > 32768 ) {
 
@@ -132,25 +133,28 @@ class MySqlSessionHandler{
             $gz='0';
         }
 
+        $updt[]=" data='".$this->dbConnection->escape_string($data)."'";
+        $updt[]=" hits='".$this->hits."'";
+        $updt[]=" timestamp='".time()."'";
+        $updt[]=" gz='".$gz."'";
+        
+
         if ( $this->hits == 1 ) {
 
-           $sql = sprintf("INSERT INTO %s VALUES('%s', '%s', '%s', '%s', '%s', '%s');commit",
-               $this->dbTable,
-               $this->dbConnection->escape_string($id),
-               $this->dbConnection->escape_string($data),
-               $this->dbConnection->escape_string($this->hits),
-               '0',
-               time(),
-               $gz);
-        } else {
+           $updt[]=" archive='0' ";
+           $updt[]=" id='".$this->dbConnection->escape_string($id)."'";
+           $sql = sprintf("INSERT INTO %s SET".join(',',$updt).";COMMIT"
+             ,$this->dbTable);
 
-            $sql = sprintf("UPDATE %s SET data='%s', archive='%s', hits='%s', timestamp='%s', gz='%s' WHERE id='%s' and archive='%s' ;commit",
+        } else {
+	
+           if ( $this->archive == '1' ) {
+	   	
+               $updt[]=" archive='0'";
+            }
+
+            $sql = sprintf("UPDATE %s SET".join(',',$updt)." WHERE id='%s' AND archive='%s' ;COMMIT",
                $this->dbTable,
-               $this->dbConnection->escape_string($data),
-               '0',
-               $this->dbConnection->escape_string($this->hits),
-               time(),
-               $gz,
                $this->dbConnection->escape_string($id),
                $this->archive);
         }
@@ -164,7 +168,7 @@ class MySqlSessionHandler{
      */
     public function destroy($id)
     {
-        $sql = sprintf("DELETE FROM %s WHERE `id` = '%s'", $this->dbTable, $this->dbConnection->escape_string($id));
+        $sql = sprintf("DELETE FROM %s WHERE `id` = '%s';COMMIT", $this->dbTable, $this->dbConnection->escape_string($id));
         return $this->dbConnection->query($sql);
     }
 
@@ -184,15 +188,15 @@ class MySqlSessionHandler{
         $time=time();
     
         //Removing robot sessions (sessions with one hit, which have not been used for half an hour)
-        $sql = sprintf("DELETE FROM %s WHERE archive=0 AND hits=1 AND `timestamp` < '%s'", $this->dbTable, $time - 1800);
-        $this->dbConnection->query($sql);
+        $sql = sprintf("DELETE FROM %s WHERE archive=0 AND hits=1 AND `timestamp` < '%s';COMMIT", $this->dbTable, $time - 1800);
+        $this->dbConnection->multi_query($sql);
     
         //Moving sessions older then one hour to archive partition    
-        $sql = sprintf("UPDATE %s SET archive='1' WHERE archive=0 and `timestamp` < '%s'", $this->dbTable, $time - 3600);
-        $this->dbConnection->query($sql);
+        $sql = sprintf("UPDATE %s SET archive='1' WHERE archive=0 AND `timestamp` < '%s';COMMIT", $this->dbTable, $time - 3600);
+        $this->dbConnection->multi_query($sql);
 
         //Removing old sessions
-        $sql = sprintf("DELETE FROM %s WHERE archive=1 and `timestamp` < '%s'", $this->dbTable, $time - intval($max));
-        return $this->dbConnection->query($sql);
+        $sql = sprintf("DELETE FROM %s WHERE archive=1 AND `timestamp` < '%s';COMMIT", $this->dbTable, $time - intval($max));
+        return $this->dbConnection->multi_query($sql);
     }
 }
