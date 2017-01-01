@@ -1,20 +1,26 @@
 # PHP MySQL Session Handler
 
-A SessionHandler to save session data into a mysql database.
-
-## Note
-This class is old and I am personally not using it anymore. Maintenance is very limited.
+A SessionHandler to save session data into a mysql database with locking.
 
 ## Usage
 Create a table in your database:
 
-    CREATE TABLE `session_handler_table` (
+    CREATE TABLE `session` (
     `id` varchar(255) NOT NULL,
-    `data` mediumtext NOT NULL,
-    `timestamp` int(255) NOT NULL,
-    PRIMARY KEY (`id`)
-    ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+    `data` mediumblob NOT NULL,
+    `hits` int(10) unsigned NOT NULL DEFAULT '0',
+    `archive` tinyint(3) unsigned NOT NULL DEFAULT '0',
+    `timestamp` int(10) unsigned NOT NULL,
+    `gz` tinyint(3) unsigned NOT NULL DEFAULT '0',
+    PRIMARY KEY (`id`,`archive`),
+    KEY `time_hits` (`timestamp`,`hits`)
+    ) ENGINE=TokuDB DEFAULT CHARSET=utf8
+    /*!50100 PARTITION BY LIST (archive)
+    (PARTITION active VALUES IN (0) ENGINE = TokuDB,
+    PARTITION archive VALUES IN (1) ENGINE = TokuDB) */
 
+Using TokuDB for better insert performance on datasets bigger then memory.
+Using two partions for data activly used and stale data.
 
 Then have a look at [example.php](example.php).<br>
 Easy!

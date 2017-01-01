@@ -1,15 +1,8 @@
 <?php
 require_once('MySqlSessionHandler.php');
 
-$session = new MySqlSessionHandler();
+$session = new MySqlSessionHandler('localhost', 'username', 'password', 'database');
 
-// add db data
-$session->setDbDetails('localhost', 'username', 'password', 'database');
-
-// OR alternatively send a MySQLi ressource
-// $session->setDbConnection($mysqli);
-
-$session->setDbTable('session_handler_table');
 session_set_save_handler(array($session, 'open'),
                          array($session, 'close'),
                          array($session, 'read'),
