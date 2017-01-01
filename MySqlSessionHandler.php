@@ -38,7 +38,7 @@ class MySqlSessionHandler{
      * @param    string    $dbPassword
      * @param    string    $dbDatabase
      */
-    public function _construct($dbHost=null, $dbUser=null, $dbPassword=null, $dbDatabase=null)
+    public function __construct($dbHost=null, $dbUser=null, $dbPassword=null, $dbDatabase=null)
     {
 
         $this->dbHost=$dbHost;
@@ -65,7 +65,7 @@ class MySqlSessionHandler{
     public function open()
     {
    
-        $this->dbConnection = new mysqli('p:'.$this->dbHost, $this->dbUser, $this->dbPassword, $this->dbDatabase);
+        $this->dbConnection = new mysqli($this->dbHost, $this->dbUser, $this->dbPassword, $this->dbDatabase);
 
         if (mysqli_connect_error()) {
             throw new Exception('Connect Error (' . mysqli_connect_errno() . ') ' . mysqli_connect_error());
